@@ -146,7 +146,7 @@ def getCoverage(outF,bedF,chroms):
 	for c in chroms:
 		inFile = outF + "/chr/" +c+".bam"
 		targets = bedF + "/chr/"+c+".bed"
-		args = shlex.split("coverageBed -b %s -d -a %s -sorted" %(inFile, targets))
+		args = shlex.split("coverageBed -b %s -d -a %s" %(inFile, targets))
 		output = subprocess.Popen(args, stdout = subprocess.PIPE).communicate()[0]
 		iOutFile.write(output)
 	iOutFile.close()
@@ -162,7 +162,7 @@ def getCoveragefromBAM(outF,bedF,inF):
 	#subprocess.call("samtools view -F 0x400 %s > %s" %(inFile,outbam),shell=True)
 	#subprocess.call("coverageBed -abam %s -d -b %s > %s" %(outbam,targets,outFile),shell=True)
 	
-	subprocess.call("coverageBed -b %s -d -a %s -sorted > %s" %(inFile,targets,outFile),shell=True)
+	subprocess.call("coverageBed -b %s -d -a %s > %s" %(inFile,targets,outFile),shell=True)
 	# subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(outFile,outFile+".sorted"),shell=True)
 	shutil.copyfile(outFile, outFile+".sorted")  # SGG: copy file instead of sorting. assume already sorted.
 
