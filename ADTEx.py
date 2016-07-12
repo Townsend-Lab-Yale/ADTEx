@@ -27,6 +27,7 @@ import argparse
 import sys
 import subprocess
 import shlex
+import shutil
 from multiprocessing import Process, Manager
 from getMeanCoverage import *
 
@@ -162,8 +163,8 @@ def getCoveragefromBAM(outF,bedF,inF):
 	#subprocess.call("coverageBed -abam %s -d -b %s > %s" %(outbam,targets,outFile),shell=True)
 	
 	subprocess.call("coverageBed -b %s -d -a %s -sorted > %s" %(inFile,targets,outFile),shell=True)
-	subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(outFile,outFile+".sorted"),shell=True)
-
+	# subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(outFile,outFile+".sorted"),shell=True)
+	shutil.copyfile(outFile, outFile+".sorted")  # SGG: copy file instead of sorting. assume already sorted.
 
 def sortFile(inF,fileN):
 	inFile = inF+fileN
@@ -214,7 +215,8 @@ def zygosity(params,outF,chroms):
 
 def getChroms(inF,outF):
 	outFile=outF+"/targets.sorted"
-	subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(inF,outFile),shell=True)
+	# subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(inF,outFile),shell=True)
+	shutil.copyfile(inF, outFile)  # SGG: copy file instead of sorting. assume already sorted.
 	infile=open(outFile)
 	chr=[]
 	chr_prev=0
