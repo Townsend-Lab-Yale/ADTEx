@@ -149,7 +149,7 @@ def getCoverage(outF,bedF,chroms):
 		output = subprocess.Popen(args, stdout = subprocess.PIPE).communicate()[0]
 		iOutFile.write(output)
 	iOutFile.close()
-	subprocess.call("sort  -V -k1 -k2n -k3n -k4n %s > %s" %(outFile,outFile+".sorted"),shell=True)
+	subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(outFile,outFile+".sorted"),shell=True)
 	
 def getCoveragefromBAM(outF,bedF,inF):
 	outFile = outF+"/coverage.txt"
@@ -162,12 +162,12 @@ def getCoveragefromBAM(outF,bedF,inF):
 	#subprocess.call("coverageBed -abam %s -d -b %s > %s" %(outbam,targets,outFile),shell=True)
 	
 	subprocess.call("coverageBed -abam %s -d -b %s > %s" %(inFile,targets,outFile),shell=True)
-	subprocess.call("sort -V -k1 -k2n -k3n -k4n %s > %s" %(outFile,outFile+".sorted"),shell=True)
+	subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(outFile,outFile+".sorted"),shell=True)
 
 
 def sortFile(inF,fileN):
 	inFile = inF+fileN
-	subprocess.call("sort  -V -k1 -k2n -k3n -k4n %s > %s" %(inFile,inFile+".sorted"),shell=True)
+	subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(inFile,inFile+".sorted"),shell=True)
 
 def getTotReads(inF,folder):
 	subprocess.call("samtools view %s | wc -l > %s/tot_reads.txt" %(inF,folder),shell=True)
@@ -214,7 +214,7 @@ def zygosity(params,outF,chroms):
 
 def getChroms(inF,outF):
 	outFile=outF+"/targets.sorted"
-	subprocess.call("sort  -V -k1 -k2n -k3n -k4n %s > %s" %(inF,outFile),shell=True)
+	subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(inF,outFile),shell=True)
 	infile=open(outFile)
 	
 
