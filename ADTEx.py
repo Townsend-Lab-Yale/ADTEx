@@ -216,17 +216,13 @@ def getChroms(inF,outF):
 	outFile=outF+"/targets.sorted"
 	subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(inF,outFile),shell=True)
 	infile=open(outFile)
-	
-
 	chr=[]
 	chr_prev=0
-
 	for line in infile:
 		chr_current=line.rstrip().split("\t")[0]
 		if (chr_current!=chr_prev and chr_current[0]!="G"):
 			chr_prev=chr_current
 			chr.append(chr_current)
-	
 	chr=",".join(chr)
 	return(chr)
 	
@@ -308,65 +304,65 @@ def main():
 		ctrDOC.join()
 		tmrDOC.join()
 	    	
-    	
-    	ctrDOC = Process(target= getMeanCoverage, args=(outF+"/temp/control/coverage.txt.sorted",outF+"/control.coverage"))
+	
+	ctrDOC = Process(target= getMeanCoverage, args=(outF+"/temp/control/coverage.txt.sorted",outF+"/control.coverage"))
 	tmrDOC = Process(target= getMeanCoverage, args=(outF+"/temp/tumor/coverage.txt.sorted",outF+"/tumor.coverage"))
 	ctrDOC.start()
 	tmrDOC.start()
 	ctrDOC.join()
-    	tmrDOC.join()
-    	
-    	subprocess.call("rm -rf %s" %(outF+"/temp"),shell=True)
-    	
-    	os.mkdir(outF+"/temp")
-    	  	
-    	segmentRatio(options,outF+"/control.coverage",outF+"/tumor.coverage",outF,chroms)
-    	
-    	chroms=open(outF+"/chrom").readline()
-    	
-    	analyseCNV(options,outF+"/ratio.data",outF,chroms)
-    	
-    	if(str(options.p_est)=="True"):
-   		print "Estimating base ploidy..."
-    		rScriptName = os.path.join(scriptPath,"extract_cnv.R")
+	tmrDOC.join()
+	
+	subprocess.call("rm -rf %s" %(outF+"/temp"),shell=True)
+	
+	os.mkdir(outF+"/temp")
+	  	
+	segmentRatio(options,outF+"/control.coverage",outF+"/tumor.coverage",outF,chroms)
+	
+	chroms=open(outF+"/chrom").readline()
+	
+	analyseCNV(options,outF+"/ratio.data",outF,chroms)
+	
+	if(str(options.p_est)=="True"):
+		print "Estimating base ploidy..."
+		rScriptName = os.path.join(scriptPath,"extract_cnv.R")
 		args = shlex.split("Rscript %s %s" %(rScriptName,outF+"/temp"))
 		rscr = subprocess.call(args)
 		
 		subprocess.call("intersectBed -a %s -b %s -wb > %s" %(outF+"/temp/snp_segments",outF+"/temp/cnv2",outF+"/temp/cnv2_baf.txt"),shell=True)
 		subprocess.call("intersectBed -a %s -b %s -wb > %s" %(outF+"/temp/snp_segments",outF+"/temp/cnv3",outF+"/temp/cnv3_baf.txt"),shell=True)
-    		subprocess.call("intersectBed -a %s -b %s -wb > %s" %(outF+"/temp/snp_segments",outF+"/temp/cnv4",outF+"/temp/cnv4_baf.txt"),shell=True)
-    		
-    		rScriptName = os.path.join(scriptPath,"base_cnv.R")
+		subprocess.call("intersectBed -a %s -b %s -wb > %s" %(outF+"/temp/snp_segments",outF+"/temp/cnv4",outF+"/temp/cnv4_baf.txt"),shell=True)
+		
+		rScriptName = os.path.join(scriptPath,"base_cnv.R")
 		args = shlex.split("Rscript %s %s" %(rScriptName,outF+"/temp"))
 		rscr = subprocess.call(args)
-    		
-    		ploidy=open(outF+"/temp/ploidy").readline()
-    		   		
-    		args = shlex.split("mv %s %s" %(outF+"/temp/cnv.result"+str(ploidy),outF+"/cnv.result"))
+		
+		ploidy=open(outF+"/temp/ploidy").readline()
+		   		
+		args = shlex.split("mv %s %s" %(outF+"/temp/cnv.result"+str(ploidy),outF+"/cnv.result"))
 		rscr = subprocess.call(args)
-    	
-    	subprocess.call("rm -rf %s" %(outF+"/temp"),shell=True)
-    	
-    	if str(options.plot)=="True":
+	
+	subprocess.call("rm -rf %s" %(outF+"/temp"),shell=True)
+	
+	if str(options.plot)=="True":
 		rScriptName = os.path.join(scriptPath,"plot_results.R")
 		args = shlex.split("Rscript %s %s %s" %(rScriptName,outF,chroms))
 		rscr = subprocess.call(args)
-    		
-    	if(str(bafIn) =="True"):
-    		subprocess.call("mkdir %s" %(outF+"/zygosity"),shell=True)
-    		zygosity(options,outF,chroms)
-    		if str(options.plot)=="True":
-    			subprocess.call("ls -v %s > %s" %(outF+"/zygosity/*.png",outF+"/zygosity/filelist"),shell=True)
-    			l=open(outF+"/zygosity/filelist").read().split("\n")
-    			l=l[0:(len(l)-1)]
-    			l.insert(0,"convert")
-    			l.append(outF+"/zygosity/zygosity_results.pdf")
-    			subprocess.call(l)
-    			subprocess.call("rm %s" %(outF+"/zygosity/filelist"),shell=True)
-    		
-    	subprocess.call("rm %s %s %s" %(outF+"/chrom",outF+"/ratio.data",outF+"/targets.sorted"),shell=True)
-    	
-    	subprocess.call("date",shell=True)
+		
+	if(str(bafIn) =="True"):
+		subprocess.call("mkdir %s" %(outF+"/zygosity"),shell=True)
+		zygosity(options,outF,chroms)
+		if str(options.plot)=="True":
+			subprocess.call("ls -v %s > %s" %(outF+"/zygosity/*.png",outF+"/zygosity/filelist"),shell=True)
+			l=open(outF+"/zygosity/filelist").read().split("\n")
+			l=l[0:(len(l)-1)]
+			l.insert(0,"convert")
+			l.append(outF+"/zygosity/zygosity_results.pdf")
+			subprocess.call(l)
+			subprocess.call("rm %s" %(outF+"/zygosity/filelist"),shell=True)
+		
+	subprocess.call("rm %s %s %s" %(outF+"/chrom",outF+"/ratio.data",outF+"/targets.sorted"),shell=True)
+	
+	subprocess.call("date",shell=True)
 	
 
 if __name__ == "__main__":
