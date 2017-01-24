@@ -146,21 +146,25 @@ if(bafin){
       CNA.object<-CNA(baf$mirrored_BAF[baf$chrom==i],baf$chrom[baf$chrom==i],
                       baf$SNP_loc[baf$chrom==i],
                       data.type="logratio",sampleid="tumor")
-      smoothed.CNA.object<-smooth.CNA(CNA.object)
-      segment.data<-segment(smoothed.CNA.object,verbose=0,undo.splits="sdundo",
+      smoothed.CNA.object <- try(smooth.CNA(CNA.object), silent=T)
+      if (class(smoothed.CNA.object)[1] != 'try-error') {
+        segment.data<-segment(smoothed.CNA.object,verbose=0,undo.splits="sdundo",
                             undo.SD=1)
-      if(nrow(segment.data$output)<6){
-        for(j in 1:nrow(segment.data$output)){
-          kk<-which(segment.data$output$loc.start[j]<=result$exon_start[f] & segment.data$output$loc.end[j]>=result$exon_end[f])
-          seg.m<-mean(obs[kk])
-          if(length(kk)>0){
-            k<-as.numeric(names(which.min(abs(seg.m-state.mean))))
-            if(k==1 & segment.data$output$seg.mean[j]>0.3){
-              k<-as.numeric(names(which.min(abs(seg.m-state.mean[-k]))))
+        if(nrow(segment.data$output)<6){
+          for(j in 1:nrow(segment.data$output)){
+            kk<-which(segment.data$output$loc.start[j]<=result$exon_start[f] & segment.data$output$loc.end[j]>=result$exon_end[f])
+            seg.m<-mean(obs[kk])
+            if(length(kk)>0){
+              k<-as.numeric(names(which.min(abs(seg.m-state.mean))))
+              if(k==1 & segment.data$output$seg.mean[j]>0.3){
+                k<-as.numeric(names(which.min(abs(seg.m-state.mean[-k]))))
+              }
+              path[kk]<-k
             }
-            path[kk]<-k
           }
         }
+      } else{
+        print(paste("SGG: skipping smoothing step due to error: (ploidy, chrom) = ", ploidy, i, sep=' '))  
       }
     }
     segments<-cnv.segments(obs,path)
