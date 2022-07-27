@@ -146,23 +146,23 @@ def getCoverage(outF,bedF,chroms):
 	for c in chroms:
 		inFile = outF + "/chr/" +c+".bam"
 		targets = bedF + "/chr/"+c+".bed"
-		args = shlex.split("coverageBed -b %s -d -a %s -counts" %(inFile, targets))
+		args = shlex.split("coverageBed -b %s -d -a %s" %(inFile, targets))
 		output = subprocess.Popen(args, stdout = subprocess.PIPE).communicate()[0]
 		iOutFile.write(output)
 	iOutFile.close()
 	subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(outFile,outFile+".sorted"),shell=True)
 	
-def getCoveragefromBAM(outF,bedF,inF):
+def getCoveragefromBAM(outF,bedF,inF,genome_path):
 	outFile = outF+"/coverage.txt"
 	targets = bedF
 	inFile = inF
-	
+
 	#to remove duplicates
 	#outbam = outF+"/noduplicates.bam"
 	#subprocess.call("samtools view -F 0x400 %s > %s" %(inFile,outbam),shell=True)
 	#subprocess.call("coverageBed -abam %s -d -b %s > %s" %(outbam,targets,outFile),shell=True)
 	
-	subprocess.call("coverageBed -b %s -d -a %s -counts > %s" %(inFile,targets,outFile),shell=True)
+	subprocess.call("coverageBed -b %s -d -a %s -g %s -sorted > %s" %(inFile,targets,genome_path,outFile),shell=True)
 	# subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(outFile,outFile+".sorted"),shell=True)
 	shutil.copyfile(outFile, outFile+".sorted")  # SGG: copy file instead of sorting. assume already sorted.
 
@@ -299,8 +299,23 @@ def main():
 	#    	tmrDOC.join()
 	
 # Following codes are for generating coverage for the whole bam at once
-		ctrDOC = Process(target= getCoveragefromBAM, args=(outF+"/temp/control",targets,control))
-		tmrDOC = Process(target= getCoveragefromBAM, args=(outF+"/temp/tumor",targets,tumor))
+		genome_path = os.path.join(outF, os.path.basename(control) + '_genome.txt')
+		# SGG: create genome.txt file
+		"""samtools view -H {bam} | grep -P "@SQ\tSN:" | sed 's/@SQ\tSN://' | sed 's/\tLN:/\t/' > {genome_path}"""
+		cmd1 = "samtools view -H {bam}".format(bam=control)
+		cmd2 = 'grep -P "@SQ\tSN:"'
+		cmd3 = "sed 's/@SQ\tSN://'"
+		cmd4 = "sed 's/\tLN:/\t/'"
+
+		with open(genome_path, 'w') as genome_file:
+			p1 = subprocess.Popen(shlex.split(cmd1), stdout=subprocess.PIPE)
+			p2 = subprocess.Popen(shlex.split(cmd2), stdout=subprocess.PIPE, stdin=p1.stdout)
+			p3 = subprocess.Popen(shlex.split(cmd3), stdout=subprocess.PIPE, stdin=p2.stdout)
+			p4 = subprocess.Popen(shlex.split(cmd4), stdout=genome_file, stdin=p3.stdout)
+		p4.communicate()
+
+		ctrDOC = Process(target= getCoveragefromBAM, args=(outF+"/temp/control",targets,control,genome_path))
+		tmrDOC = Process(target= getCoveragefromBAM, args=(outF+"/temp/tumor",targets,tumor,genome_path))
 		ctrDOC.start()
 		tmrDOC.start()
 		ctrDOC.join()
