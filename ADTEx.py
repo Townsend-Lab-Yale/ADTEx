@@ -23,13 +23,14 @@
 #-----------------------------------------------------------------------#
 
 import os
-import argparse
 import sys
-import subprocess
 import shlex
 import shutil
-from multiprocessing import Process, Manager
-from getMeanCoverage import *
+import argparse
+import subprocess
+from multiprocessing import Process
+
+from .getMeanCoverage import getMeanCoverage
 
 
 #absolute script path
@@ -39,7 +40,7 @@ class Options:
 
 	def __init__(self):
 		self.parser = argparse.ArgumentParser("Aberration Detection in Tumour EXome")
-		self.parser.add_argument('-n','--normal', help = 'Matched normal sample in BAM format or bed formatted coverage [REQUIRED], to generate bed formatted coverage please see documentation',dest='control')
+		self.parser.add_argument('-n','--normal', help='Matched normal sample in BAM format or bed formatted coverage [REQUIRED], to generate bed formatted coverage please see documentation',dest='control')
 		self.parser.add_argument('-t','--tumor', help = 'Tumor sample in BAM format or bed format DOC coverage [REQUIRED], to generate bed formatted coverage please see documentation',dest='tumor')
 		self.parser.add_argument('-b','--bed',help = 'BED format of the targeted regions [REQUIRED]', dest='bed')
 		self.parser.add_argument('-o','--out',help="Output folder path name to store the output of analysis [REQUIRED]",
@@ -89,7 +90,7 @@ class Options:
 			self.ploidy = args.ploidy
 			self.p_est="False"
 			if str(args.p_est)=="True":
-				print "Ploidy provided. Estimation step won't be extecuted"
+				print("Ploidy provided. Estimation step won't be extecuted")
 			self.ploidyIn = "True"
 		else:
 			self.ploidyIn = "False"
@@ -111,19 +112,20 @@ def splitBam(inF,outFolder,chroms):
 	try:
 		os.mkdir(outFolder + "/chr/")
 	except:
-		print "Folder exists"
+		print("Folder exists")
 		 					
 	for c in chroms:
-		outputfile = outFolder + "/chr/" + c+".bam"
-		subprocess.call("samtools view -bh %s %s > %s" %(inF,c,outputfile),shell=True)
+		outputfile = outFolder + "/chr/" + c + ".bam"
+		subprocess.call("samtools view -bh %s %s > %s" %(inF,c,outputfile),
+						shell=True)
 		
 
 def splitBed(inF,outFolder,chroms):
 	try:
 		os.mkdir(outFolder + "/chr/")
 	except:
-		print "Folder exists"
-	inF = open(inF,"r")
+		print("Folder exists")
+	inF = open(inF, "r")
 	check = "1"
 	outputfile = outFolder + "/chr/" + str(check)+".bed"
 	outfile = open(outputfile,"w")
@@ -151,7 +153,8 @@ def getCoverage(outF,bedF,chroms):
 		iOutFile.write(output)
 	iOutFile.close()
 	subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(outFile,outFile+".sorted"),shell=True)
-	
+
+
 def getCoveragefromBAM(outF,bedF,inF,genome_path):
 	outFile = outF+"/coverage.txt"
 	targets = bedF
@@ -175,7 +178,7 @@ def getTotReads(inF,folder):
 	subprocess.call("samtools view %s | wc -l > %s/tot_reads.txt" %(inF,folder),shell=True)
 
 def analyseCNV(params,ratio_data,outF,chroms):
-	print "Analysing CNV..."
+	print("Analysing CNV...")
 	rScriptName = os.path.join(scriptPath, "cnv_analyse.R")
 	rFunctionsPath = os.path.join(scriptPath, "RFunction.R")
 	
@@ -198,23 +201,23 @@ def analyseCNV(params,ratio_data,outF,chroms):
 		cnv3.start()
 		cnv4.start()
 		cnv2.join()
-	    	cnv3.join()
-	    	cnv4.join()
+		cnv3.join()
+		cnv4.join()
 		
 
-def segmentRatio(params,cCoverage,tCoverage,outF,chroms):
+def segmentRatio(params,cCoverage,tCoverage,outF,chroms) -> None:
 	rScriptName = os.path.join(scriptPath,"segment_ratio.R")
 	rFunctionsPath = os.path.join(scriptPath,"RFunction.R")
 	args = shlex.split("Rscript %s %s %s %s %s %s %s %s %s %s" %(rScriptName,rFunctionsPath,cCoverage,tCoverage,params.minRead,outF,params.bafin,params.baf,params.ploidyIn,chroms))
-	rscr = subprocess.call(args)
+	subprocess.call(args)
 
-def zygosity(params,outF,chroms):
-	print "Predicting Zygosity states"
+def zygosity(params,outF,chroms) -> None:
+	print("Predicting Zygosity states")
 	rScriptName = os.path.join(scriptPath,"zygosity.R")
 	args = shlex.split("Rscript %s %s %s %s %s %s" %(rScriptName,params.baf,outF,params.minRead,params.plot,chroms))
-	rscr = subprocess.call(args)
+	subprocess.call(args)
 
-def getChroms(inF,outF):
+def getChroms(inF,outF) -> str:
 	outFile=outF+"/targets.sorted"
 	# subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(inF,outFile),shell=True)
 	# shutil.copyfile(inF, outFile)  # SGG: copy file instead of sorting. assume already sorted.
@@ -224,11 +227,11 @@ def getChroms(inF,outF):
 	chr_prev=0
 	for line in infile:
 		chr_current=line.split("\t")[0]  # SGG: don't need rstrip
-		if (chr_current!=chr_prev and chr_current[0]!="G"):
+		if chr_current != chr_prev and chr_current[0] != "G":
 			chr_prev=chr_current
 			chr.append(chr_current)
 	chr=",".join(chr)
-	return(chr)
+	return chr
 
 def get_full_path_sgg(file_path):
 	if file_path.startswith('/'):
@@ -237,11 +240,8 @@ def get_full_path_sgg(file_path):
 	return os.path.join(wd, file_path)
 
 def main():
-
 	subprocess.call("date",shell=True)
-	
 	options = Options()
-	
 	control = options.control
 	tumor = options.tumor
 	targets = options.bed
@@ -249,15 +249,15 @@ def main():
 	docInput = options.docInput
 	bafIn = options.bafin
 	
-	print "Creating output folder"
+	print("Creating output folder")
 	
 	if outF[len(outF)-1] == "/":
 		outF = outF[:len(outF)-1]
 	try:
 		os.mkdir(outF)
 	except:
-		print "cannot create folder '%s'" %outF
-		print "if folder already exist, please specify other folder"
+		print("cannot create folder '%s'" %outF)
+		print("if folder already exist, please specify other folder")
 		sys.exit(1)
 		
 	os.mkdir(outF+"/temp")
@@ -268,7 +268,7 @@ def main():
 	targets = outF+"/targets.sorted"
 		
 	if (str(docInput)=="True"):
-		print "Generating mean coverage files..."
+		print("Generating mean coverage files...")
 		# SGG: symlink instead of copy. skip sorting step
 		# subprocess.call("cp %s %s" %(control,outF+"/temp/control/coverage.txt"),shell=True)
 		# subprocess.call("cp %s %s" %(tumor,outF+"/temp/tumor/coverage.txt"),shell=True)
@@ -283,33 +283,33 @@ def main():
 		# tmrSort.join()
 	   	
 	else:
-		print "Creating coverage files"
-	#	ctrSplit = Process(target = splitBam, args=(control,outF+"/temp/control",chroms))
-	#	tmrSplit = Process(target = splitBam, args=(tumor,outF+"/temp/tumor",chroms))
-	#	tSplit = Process(target = splitBed, args=(targets,outF+"/temp",chroms))
-	#	#ctrTotal = Process(target = getTotReads, args=(control,outF+"/temp/control"))
-	#	#tTotal = Process(target = getTotReads, args=(tumor,outF+"/temp/tumor"))
-		
-	#	ctrSplit.start()
-	#	tmrSplit.start()
-	#	tSplit.start()
-	#	#ctrTotal.start()
-	#	#tTotal.start()
-	
-	#	ctrSplit.join()
-	#	tmrSplit.join()
-	#	tSplit.join()
-	#	#ctrTotal.join()
-	#	#tTotal.join()	
+		print("Creating coverage files")
+		# ctrSplit = Process(target = splitBam, args=(control,outF+"/temp/control",chroms))
+		# tmrSplit = Process(target = splitBam, args=(tumor,outF+"/temp/tumor",chroms))
+		# tSplit = Process(target = splitBed, args=(targets,outF+"/temp",chroms))
+		# #ctrTotal = Process(target = getTotReads, args=(control,outF+"/temp/control"))
+		# #tTotal = Process(target = getTotReads, args=(tumor,outF+"/temp/tumor"))
 
-	#	ctrDOC = Process(target= getCoverage, args=(outF+"/temp/control",outF+"/temp",chroms))
-	#	tmrDOC = Process(target= getCoverage, args=(outF+"/temp/tumor",outF+"/temp",chroms))
-	#	ctrDOC.start()
-	#	tmrDOC.start()
-	#	ctrDOC.join()
-	#    	tmrDOC.join()
+		# ctrSplit.start()
+		# tmrSplit.start()
+		# tSplit.start()
+		# #ctrTotal.start()
+		# #tTotal.start()
+
+		# ctrSplit.join()
+		# tmrSplit.join()
+		# tSplit.join()
+		# #ctrTotal.join()
+		# #tTotal.join()
+
+		# ctrDOC = Process(target= getCoverage, args=(outF+"/temp/control",outF+"/temp",chroms))
+		# tmrDOC = Process(target= getCoverage, args=(outF+"/temp/tumor",outF+"/temp",chroms))
+		# ctrDOC.start()
+		# tmrDOC.start()
+		# ctrDOC.join()
+		# tmrDOC.join()
 	
-# Following codes are for generating coverage for the whole bam at once
+		# Following codes are for generating coverage for the whole bam at once
 		genome_path = os.path.join(outF, os.path.basename(control) + '_genome.txt')
 		# SGG: create genome.txt file
 		"""samtools view -H {bam} | grep -P "@SQ\tSN:" | sed 's/@SQ\tSN://' | sed 's/\tLN:/\t/' > {genome_path}"""
@@ -331,7 +331,6 @@ def main():
 		tmrDOC.start()
 		ctrDOC.join()
 		tmrDOC.join()
-	    	
 	
 	ctrDOC = Process(target= getMeanCoverage, args=(outF+"/temp/control/coverage.txt.sorted",outF+"/control.coverage"))
 	tmrDOC = Process(target= getMeanCoverage, args=(outF+"/temp/tumor/coverage.txt.sorted",outF+"/tumor.coverage"))
@@ -352,10 +351,10 @@ def main():
 	analyseCNV(options,outF+"/ratio.data",outF,chroms)
 	
 	if(str(options.p_est)=="True"):
-		print "Estimating base ploidy..."
+		print("Estimating base ploidy...")
 		rScriptName = os.path.join(scriptPath,"extract_cnv.R")
 		args = shlex.split("Rscript %s %s" %(rScriptName,outF+"/temp"))
-		rscr = subprocess.call(args)
+		_ = subprocess.call(args)
 		
 		print('intersecting snp segments with cnv tables')  # SGG print
 		subprocess.call("intersectBed -a %s -b %s -wb > %s" %(outF+"/temp/snp_segments",outF+"/temp/cnv2",outF+"/temp/cnv2_baf.txt"),shell=True)
@@ -364,13 +363,13 @@ def main():
 		
 		rScriptName = os.path.join(scriptPath,"base_cnv.R")
 		args = shlex.split("Rscript %s %s" %(rScriptName,outF+"/temp"))
-		rscr = subprocess.call(args)
+		_ = subprocess.call(args)
 		
 		ploidy=open(outF+"/temp/ploidy").readline()
 
 		print('working on zygosity')  # SGG print
 		args = shlex.split("mv %s %s" %(outF+"/temp/cnv.result"+str(ploidy),outF+"/cnv.result"))
-		rscr = subprocess.call(args)
+		_ = subprocess.call(args)
 	
 	print('removing temp dir')  # SGG print
 	subprocess.call("rm -rf %s" %(outF+"/temp"),shell=True)
@@ -381,9 +380,9 @@ def main():
 		rscr = subprocess.call(args)
 
 	print('working on zygosity')  # SGG print
-	if(str(bafIn) =="True"):
+	if str(bafIn) == "True":
 		subprocess.call("mkdir %s" %(outF+"/zygosity"),shell=True)
-		zygosity(options,outF,chroms)
+		zygosity(options, outF, chroms)
 		if str(options.plot)=="True":
 			subprocess.call("ls -v %s > %s" %(outF+"/zygosity/*.png",outF+"/zygosity/filelist"),shell=True)
 			l=open(outF+"/zygosity/filelist").read().split("\n")
@@ -395,8 +394,8 @@ def main():
 		
 	# subprocess.call("rm %s %s %s" %(outF+"/chrom",outF+"/ratio.data",outF+"/targets.sorted"),shell=True)  # SGG hide
 	
-	subprocess.call("date",shell=True)
-	
+	subprocess.call("date", shell=True)
+
 
 if __name__ == "__main__":
 	main()
