@@ -30,8 +30,6 @@ import argparse
 import subprocess
 from multiprocessing import Process
 
-from .getMeanCoverage import getMeanCoverage
-
 
 # absolute script path
 scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
@@ -44,14 +42,14 @@ class Options:
             "-n",
             "--normal",
             help="Matched normal sample in BAM format or bed formatted coverage [REQUIRED], "
-                 "to generate bed formatted coverage please see documentation",
+            "to generate bed formatted coverage please see documentation",
             dest="control",
         )
         self.parser.add_argument(
             "-t",
             "--tumor",
             help="Tumor sample in BAM format or bed format DOC coverage [REQUIRED], "
-                 "to generate bed formatted coverage please see documentation",
+            "to generate bed formatted coverage please see documentation",
             dest="tumor",
         )
         self.parser.add_argument(
@@ -70,7 +68,7 @@ class Options:
         self.parser.add_argument(
             "--DOC",
             help="If specified, matched normal and tumor inputs  will be in BED "
-                 "formatted coverage [False]",
+            "formatted coverage [False]",
             action="store_true",
             dest="doc",
             default="False",
@@ -106,7 +104,7 @@ class Options:
         self.parser.add_argument(
             "--baf",
             help="File containing B allele frequencies at heterozygous loci of "
-                 "the normal [optional]",
+            "the normal [optional]",
             dest="baf",
             action="store",
         )
