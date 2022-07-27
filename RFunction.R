@@ -340,15 +340,19 @@ combine.segments<-function(obs,path){
   return(segments)
 }
 
-smoothData<-function(data,chrom=c(1:22)){
+smoothData<-function(data,chrom=c(1:22)){  # SGG modified to test for below median values
   data$ratio_after_smoothing<-data$ratio
   for(i in chrom){
     f<-data$chr==i
     df<-data[f,]
     f1<-df$control<median(df$control)
-    df$ratio[f1]<-wavShrink(df$ratio[f1], wavelet="haar",thresh.fun="adaptive",shrink.fun="soft",
+    if(any(f1)){
+      df$ratio[f1]<-wavShrink(df$ratio[f1], wavelet="haar",thresh.fun="adaptive",shrink.fun="soft",
                             thresh.scale=1, xform="dwt",
                             n.level=ilogb(length(df$ratio[f1]),base=2))
+    } else {
+      print(paste("SGG: No values below median for chrom", i, sep=' '))
+    }
     data$ratio_after_smoothing[f]<-df$ratio
   }
   return(data)

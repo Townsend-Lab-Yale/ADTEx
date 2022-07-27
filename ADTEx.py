@@ -162,7 +162,8 @@ def getCoveragefromBAM(outF,bedF,inF,genome_path):
 	#subprocess.call("samtools view -F 0x400 %s > %s" %(inFile,outbam),shell=True)
 	#subprocess.call("coverageBed -abam %s -d -b %s > %s" %(outbam,targets,outFile),shell=True)
 	
-	subprocess.call("coverageBed -b %s -d -a %s -g %s -sorted > %s" %(inFile,targets,genome_path,outFile),shell=True)
+	subprocess.call("coverageBed -b %s -d -a %s -g %s -sorted > %s"
+		%(inFile,targets,genome_path,outFile),shell=True)  # SGG: add genome path
 	# subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(outFile,outFile+".sorted"),shell=True)
 	shutil.copyfile(outFile, outFile+".sorted")  # SGG: copy file instead of sorting. assume already sorted.
 
@@ -216,18 +217,25 @@ def zygosity(params,outF,chroms):
 def getChroms(inF,outF):
 	outFile=outF+"/targets.sorted"
 	# subprocess.call("sort -V -k1,1 -k2,2n -k3,3n -k4,4n %s > %s" %(inF,outFile),shell=True)
-	shutil.copyfile(inF, outFile)  # SGG: copy file instead of sorting. assume already sorted.
+	# shutil.copyfile(inF, outFile)  # SGG: copy file instead of sorting. assume already sorted.
+	os.symlink(get_full_path_sgg(inF), outFile)  # SGG: symlink file instead of sorting or copying.
 	infile=open(outFile)
 	chr=[]
 	chr_prev=0
 	for line in infile:
-		chr_current=line.rstrip().split("\t")[0]
+		chr_current=line.split("\t")[0]  # SGG: don't need rstrip
 		if (chr_current!=chr_prev and chr_current[0]!="G"):
 			chr_prev=chr_current
 			chr.append(chr_current)
 	chr=",".join(chr)
 	return(chr)
-	
+
+def get_full_path_sgg(file_path):
+	if file_path.startswith('/'):
+		return file_path
+	wd = os.getcwd()
+	return os.path.join(wd, file_path)
+
 def main():
 
 	subprocess.call("date",shell=True)
@@ -261,15 +269,18 @@ def main():
 		
 	if (str(docInput)=="True"):
 		print "Generating mean coverage files..."
-		subprocess.call("cp %s %s" %(control,outF+"/temp/control/coverage.txt"),shell=True)
-		subprocess.call("cp %s %s" %(tumor,outF+"/temp/tumor/coverage.txt"),shell=True)
+		# SGG: symlink instead of copy. skip sorting step
+		# subprocess.call("cp %s %s" %(control,outF+"/temp/control/coverage.txt"),shell=True)
+		# subprocess.call("cp %s %s" %(tumor,outF+"/temp/tumor/coverage.txt"),shell=True)
+		os.symlink(get_full_path_sgg(control), outF+"/temp/control/coverage.txt.sorted")  # SGG
+		os.symlink(get_full_path_sgg(tumor), outF+"/temp/tumor/coverage.txt.sorted") # SGG
 		#subprocess.call("cp %s %s" %(options.totReads,outF+"/totReads.txt"),shell=True)
-		ctrSort=Process(target= sortFile, args=(outF+"/temp/control","/coverage.txt"))
-		tmrSort=Process(target= sortFile, args=(outF+"/temp/tumor","/coverage.txt"))
-		ctrSort.start()
-		tmrSort.start()
-		ctrSort.join()
-		tmrSort.join()
+		# ctrSort=Process(target= sortFile, args=(outF+"/temp/control","/coverage.txt"))
+		# tmrSort=Process(target= sortFile, args=(outF+"/temp/tumor","/coverage.txt"))
+		# ctrSort.start()
+		# tmrSort.start()
+		# ctrSort.join()
+		# tmrSort.join()
 	   	
 	else:
 		print "Creating coverage files"
@@ -334,9 +345,10 @@ def main():
 	os.mkdir(outF+"/temp")
 	  	
 	segmentRatio(options,outF+"/control.coverage",outF+"/tumor.coverage",outF,chroms)
-	
+
 	chroms=open(outF+"/chrom").readline()
 	
+	print('running analyse CNV')  # SGG print
 	analyseCNV(options,outF+"/ratio.data",outF,chroms)
 	
 	if(str(options.p_est)=="True"):
@@ -345,6 +357,7 @@ def main():
 		args = shlex.split("Rscript %s %s" %(rScriptName,outF+"/temp"))
 		rscr = subprocess.call(args)
 		
+		print('intersecting snp segments with cnv tables')  # SGG print
 		subprocess.call("intersectBed -a %s -b %s -wb > %s" %(outF+"/temp/snp_segments",outF+"/temp/cnv2",outF+"/temp/cnv2_baf.txt"),shell=True)
 		subprocess.call("intersectBed -a %s -b %s -wb > %s" %(outF+"/temp/snp_segments",outF+"/temp/cnv3",outF+"/temp/cnv3_baf.txt"),shell=True)
 		subprocess.call("intersectBed -a %s -b %s -wb > %s" %(outF+"/temp/snp_segments",outF+"/temp/cnv4",outF+"/temp/cnv4_baf.txt"),shell=True)
@@ -354,17 +367,20 @@ def main():
 		rscr = subprocess.call(args)
 		
 		ploidy=open(outF+"/temp/ploidy").readline()
-		   		
+
+		print('working on zygosity')  # SGG print
 		args = shlex.split("mv %s %s" %(outF+"/temp/cnv.result"+str(ploidy),outF+"/cnv.result"))
 		rscr = subprocess.call(args)
 	
+	print('removing temp dir')  # SGG print
 	subprocess.call("rm -rf %s" %(outF+"/temp"),shell=True)
 	
 	if str(options.plot)=="True":
 		rScriptName = os.path.join(scriptPath,"plot_results.R")
 		args = shlex.split("Rscript %s %s %s" %(rScriptName,outF,chroms))
 		rscr = subprocess.call(args)
-		
+
+	print('working on zygosity')  # SGG print
 	if(str(bafIn) =="True"):
 		subprocess.call("mkdir %s" %(outF+"/zygosity"),shell=True)
 		zygosity(options,outF,chroms)
@@ -377,7 +393,7 @@ def main():
 			subprocess.call(l)
 			subprocess.call("rm %s" %(outF+"/zygosity/filelist"),shell=True)
 		
-	subprocess.call("rm %s %s %s" %(outF+"/chrom",outF+"/ratio.data",outF+"/targets.sorted"),shell=True)
+	# subprocess.call("rm %s %s %s" %(outF+"/chrom",outF+"/ratio.data",outF+"/targets.sorted"),shell=True)  # SGG hide
 	
 	subprocess.call("date",shell=True)
 	
