@@ -175,7 +175,7 @@ def splitBam(inF, outFolder, chroms):
         )
 
 
-def splitBed(inF, outFolder, chroms):
+def splitBed(inF, outFolder):
     try:
         os.mkdir(outFolder + "/chr/")
     except:
@@ -270,7 +270,7 @@ def analyseCNV(params, ratio_data, outF, chroms):
                 chrom,
             )
         )
-        rscr = subprocess.call(args)
+        _ = subprocess.call(args)
 
     if str(params.p_est) == "False":
         args = shlex.split(
@@ -288,12 +288,12 @@ def analyseCNV(params, ratio_data, outF, chroms):
                 chroms,
             )
         )
-        rscr = subprocess.call(args)
+        _ = subprocess.call(args)
         args = shlex.split(
             "mv %s %s"
             % (outF + "/temp/cnv.result" + str(params.ploidy), outF + "/cnv.result")
         )
-        rscr = subprocess.call(args)
+        _ = subprocess.call(args)
     else:
         cnv2 = Process(
             target=runCNV,
@@ -365,7 +365,7 @@ def getChroms(inF, outF) -> str:
     return chr
 
 
-def get_full_path_sgg(file_path):
+def get_full_path_sgg(file_path) -> str:
     if file_path.startswith("/"):
         return file_path
     wd = os.getcwd()
