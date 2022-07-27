@@ -30,6 +30,7 @@ import argparse
 import subprocess
 from multiprocessing import Process
 
+from .getMeanCoverage import getMeanCoverage
 
 # absolute script path
 scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
