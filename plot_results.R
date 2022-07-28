@@ -26,6 +26,7 @@ chrom=unlist(strsplit(options[2],","))
 
 result<-read.delim(paste(outputLoc,"/cnv.result",sep=""))
 print("Plotting the results :")
+options(bitmapType='cairo')  # sgg addition to avoid x11 error 'unable to start device PNG'
 for(i in chrom){
   png(filename=paste(outputLoc,"/chr",i,".png",sep=""),height=600,width=600,
       bg="white")

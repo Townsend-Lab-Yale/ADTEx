@@ -284,6 +284,7 @@ snp_copy<-function(baf,cnv_res,chrom){
 
 plot.result<-function(bafcn,cnv_res,dir,chr){
   print("Plotting results...")
+  options(bitmapType='cairo')  # sgg addition to avoid x11 error 'unable to start device PNG'
   for(i in chr){
     png(filename=paste(dir,"chr",i,"_zygosity.png",sep=""),height=750,width=600,
         bg="white")
