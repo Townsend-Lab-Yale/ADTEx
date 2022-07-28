@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 
 # ----------------------------------------------------------------------#
-# Copyright (c) 2013, Kaushalya Amarasinghe.
+# Copyright (c) 2013, Kaushalya Amarasinghe. 2022, Stephen G. Gaffney
 #
 # > Source License <
 # This file is part of ADTEx.
