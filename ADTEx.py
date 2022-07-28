@@ -334,6 +334,7 @@ def segmentRatio(params, cCoverage, tCoverage, outF, chroms) -> None:
             chroms,
         )
     )
+    print(f"R subprocess:\n {' '.join(args)}")
     subprocess.call(args)
 
 
@@ -344,6 +345,7 @@ def zygosity(params, outF, chroms) -> None:
         "Rscript %s %s %s %s %s %s"
         % (rScriptName, params.baf, outF, params.minRead, params.plot, chroms)
     )
+    print(f"R subprocess:\n {' '.join(args)}")
     subprocess.call(args)
 
 
@@ -511,39 +513,37 @@ def main():
         print("Estimating base ploidy...")
         rScriptName = os.path.join(scriptPath, "extract_cnv.R")
         args = shlex.split("Rscript %s %s" % (rScriptName, outF + "/temp"))
+        print(f"R subprocess:\n {' '.join(args)}")
         _ = subprocess.call(args)
 
         print("intersecting snp segments with cnv tables")  # SGG print
-        subprocess.call(
-            "intersectBed -a %s -b %s -wb > %s"
-            % (
+        cmd = "intersectBed -a %s -b %s -wb > %s" % (
                 outF + "/temp/snp_segments",
                 outF + "/temp/cnv2",
                 outF + "/temp/cnv2_baf.txt",
-            ),
-            shell=True,
+            )
+        print(f"R subprocess:\n {cmd}")
+        subprocess.call(cmd, shell=True)
+
+        cmd = "intersectBed -a %s -b %s -wb > %s" % (
+            outF + "/temp/snp_segments",
+            outF + "/temp/cnv3",
+            outF + "/temp/cnv3_baf.txt",
         )
-        subprocess.call(
-            "intersectBed -a %s -b %s -wb > %s"
-            % (
-                outF + "/temp/snp_segments",
-                outF + "/temp/cnv3",
-                outF + "/temp/cnv3_baf.txt",
-            ),
-            shell=True,
-        )
-        subprocess.call(
-            "intersectBed -a %s -b %s -wb > %s"
-            % (
+        print(f"R subprocess:\n {cmd}")
+        subprocess.call(cmd, shell=True)
+
+        cmd = "intersectBed -a %s -b %s -wb > %s" % (
                 outF + "/temp/snp_segments",
                 outF + "/temp/cnv4",
                 outF + "/temp/cnv4_baf.txt",
-            ),
-            shell=True,
-        )
+            )
+        print(f"R subprocess:\n {cmd}")
+        subprocess.call(cmd, shell=True)
 
         rScriptName = os.path.join(scriptPath, "base_cnv.R")
         args = shlex.split("Rscript %s %s" % (rScriptName, outF + "/temp"))
+        print(f"R subprocess:\n {' '.join(args)}")
         _ = subprocess.call(args)
 
         ploidy = open(outF + "/temp/ploidy").readline()
@@ -552,6 +552,7 @@ def main():
         args = shlex.split(
             "mv %s %s" % (outF + "/temp/cnv.result" + str(ploidy), outF + "/cnv.result")
         )
+        print(f"R subprocess:\n {' '.join(args)}")
         _ = subprocess.call(args)
 
     print("removing temp dir")  # SGG print
@@ -560,7 +561,8 @@ def main():
     if str(options.plot) == "True":
         rScriptName = os.path.join(scriptPath, "plot_results.R")
         args = shlex.split("Rscript %s %s %s" % (rScriptName, outF, chroms))
-        rscr = subprocess.call(args)
+        print(f"R subprocess:\n {' '.join(args)}")
+        _ = subprocess.call(args)
 
     print("working on zygosity")  # SGG print
     if str(bafIn) == "True":
@@ -576,6 +578,7 @@ def main():
             l = l[0 : (len(l) - 1)]
             l.insert(0, "convert")
             l.append(outF + "/zygosity/zygosity_results.pdf")
+            print(f"R subprocess:\n {' '.join(l)}")
             subprocess.call(l)
             subprocess.call("rm %s" % (outF + "/zygosity/filelist"), shell=True)
 
