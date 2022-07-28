@@ -63,7 +63,9 @@ tumor<-tumor[f,]
 control[,5]<-control[,4]/mean(control[,4])
 tumor[,5]<-tumor[,4]/mean(tumor[,4])
 ratio<-tumor[,5]/control[,5]
-df<-data.frame(cbind(chr=result[,1],control=control[,4],ratio=ratio))
+# df<-data.frame(cbind(chr=result[,1],control=control[,4],ratio=ratio))  # sgg: BAD. converts control to char.
+df <- data.frame(result[,1], control[,4], ratio)  # sgg fix
+colnames(df) <- c("chr", "control", "ratio")  # sgg fix
 df$chr<-result[,1]
 df<-smoothData(df,chrom)
 result$ratio_before_smoothing<-df$ratio
