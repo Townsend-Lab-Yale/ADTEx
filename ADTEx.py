@@ -27,6 +27,7 @@ import sys
 import shlex
 import shutil
 import argparse
+import datetime
 import subprocess
 from multiprocessing import Process
 
@@ -386,12 +387,11 @@ def main():
 
     if outF[len(outF) - 1] == "/":
         outF = outF[: len(outF) - 1]
-    try:
-        os.mkdir(outF)
-    except:
-        print("cannot create folder '%s'" % outF)
-        print("if folder already exist, please specify other folder")
-        sys.exit(1)
+    if os.path.exists(outF):
+        now_str = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H%M%S')
+        shutil.move(outF, f"{outF}_{now_str}")
+    os.mkdir(outF)
+
 
     os.mkdir(outF + "/temp")
     os.mkdir(outF + "/temp/control")
