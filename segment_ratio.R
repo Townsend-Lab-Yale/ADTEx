@@ -23,15 +23,15 @@
 require("wmtsa")
 
 options <- commandArgs(trailingOnly = T)
-sourceFunc = options[1]
-control = options[2]
-tumor = options[3]
-thresh = as.numeric(options[4])
-outputLoc = options[5]
-bafIn = as.logical(options[6])
-baf = options[7]
-ploidyIn = as.logical(options[8])
-chrom=unlist(strsplit(options[9],","))
+sourceFunc <- options[1]
+control <- options[2]
+tumor <- options[3]
+thresh <- as.numeric(options[4])
+outputLoc <- options[5]
+bafIn <- as.logical(options[6])
+baf <- options[7]
+ploidyIn <- as.logical(options[8])
+chrom <- unlist(strsplit(options[9], ","))
 
 options(scipen=999) # removing scientific notation. fixed notation will be preferred
                     #unless it is more than scipen digits wider
