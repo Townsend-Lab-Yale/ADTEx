@@ -21,6 +21,8 @@
 #-----------------------------------------------------------------------#
 
 require("wmtsa")
+require("splus2R")  # for peaks
+require("ifultools")  # for ilogb
 
 options <- commandArgs(trailingOnly = T)
 sourceFunc <- options[1]
